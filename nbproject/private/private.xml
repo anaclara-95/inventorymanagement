@@ -4,10 +4,8 @@
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
             <file>file:/C:/Users/anacl/Documents/NetBeansProjects/InventoryManagementSystem/src/dao/tables.java</file>
+            <file>file:/C:/Users/anacl/Documents/NetBeansProjects/InventoryManagementSystem/src/ManageCategory.java</file>
             <file>file:/C:/Users/anacl/Documents/NetBeansProjects/InventoryManagementSystem/src/Home.java</file>
-            <file>file:/C:/Users/anacl/Documents/NetBeansProjects/InventoryManagementSystem/src/dao/ConnectionProvider.java</file>
-            <file>file:/C:/Users/anacl/Documents/NetBeansProjects/InventoryManagementSystem/src/Login.java</file>
-            <file>file:/C:/Users/anacl/Documents/NetBeansProjects/InventoryManagementSystem/src/ManageUser.java</file>
         </group>
     </open-files>
 </project-private>
