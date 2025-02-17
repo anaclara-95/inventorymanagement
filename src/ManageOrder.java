@@ -5,23 +5,23 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-
 /**
  *
  * @author anacl
  */
 public class ManageOrder extends javax.swing.JFrame {
-    
+
     private int customerPk = 0;
     private int productPk = 0;
     private int finalTotalPrice = 0;
     //esta variable guarda el ID de cada orden (el cual es único)
-    private String orderId= "";
+    private String orderId = "";
 
     /**
      * Creates new form ManageOrder
@@ -30,7 +30,7 @@ public class ManageOrder extends javax.swing.JFrame {
         initComponents();
         setLocationRelativeTo(null);
     }
-    
+
     //cuando se hace click en el botón "add to cart" se borran los campos de arriba y se restablece el valor productPK a cero
     private void clearProductFields() {
         productPk = 0;
@@ -38,10 +38,9 @@ public class ManageOrder extends javax.swing.JFrame {
         txtProductPrice.setText("");
         txtProductDescription.setText("");
         txtOrderQuantity.setText("");
-        
-       
+
     }
-    
+
     public String getUniqueId(String prefix) {
         //generar un ID de factura único
         return prefix + System.nanoTime();
@@ -115,6 +114,11 @@ public class ManageOrder extends javax.swing.JFrame {
                 "ID", "Name", "Mobile Number", "Email"
             }
         ));
+        tableCustomer.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tableCustomerMouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(tableCustomer);
 
         getContentPane().add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 117, 410, 180));
@@ -131,6 +135,11 @@ public class ManageOrder extends javax.swing.JFrame {
                 "ID", "Name", "Price", "Quantity", "Description", "Category ID", "Category Name"
             }
         ));
+        tableProduct.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tableProductMouseClicked(evt);
+            }
+        });
         jScrollPane2.setViewportView(tableProduct);
 
         getContentPane().add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(470, 120, 470, 180));
@@ -209,6 +218,11 @@ public class ManageOrder extends javax.swing.JFrame {
 
         jButton1.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jButton1.setText("Add to cart");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
         getContentPane().add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(463, 699, 460, -1));
 
         jLabel10.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
@@ -253,33 +267,33 @@ public class ManageOrder extends javax.swing.JFrame {
         txtCustomerName.setEditable(false);
         txtCustomerMobileNumber.setEditable(false);
         txtCustomerEmail.setEditable(false);
-        
+
         txtProductName.setEditable(false);
         txtProductPrice.setEditable(false);
         txtProductDescription.setEditable(false);
-        
+
         //poner los valores iniciales en la tabla product y la tabla customer
         DefaultTableModel model = (DefaultTableModel) tableCustomer.getModel();
         DefaultTableModel productModel = (DefaultTableModel) tableProduct.getModel();
-         try {
+        try {
             Connection con = ConnectionProvider.getCon();
             Statement st = con.createStatement();
             ResultSet rs = st.executeQuery("select * from customer");
-            
+
             while (rs.next()) {
                 model.addRow(new Object[]{rs.getString("customer_pk"), rs.getString("name"), rs.getString("mobileNumber"), rs.getString("email")});
             }
-            
-           rs = st.executeQuery("select * from product inner join category on product.category_fk = category.category_pk");
-           while(rs.next()) {
+
+            rs = st.executeQuery("select * from product inner join category on product.category_fk = category.category_pk");
+            while (rs.next()) {
                 productModel.addRow(new Object[]{rs.getString("product_pk"), rs.getString("name"), rs.getString("price"), rs.getString("quantity"), rs.getString("description"), rs.getString("category_fk"), rs.getString(8)});
-           }
-           
+            }
+
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, e);
         }
 
-        
+
     }//GEN-LAST:event_formComponentShown
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
@@ -292,6 +306,93 @@ public class ManageOrder extends javax.swing.JFrame {
         setVisible(false);
         new ManageOrder().setVisible(true);
     }//GEN-LAST:event_jButton3ActionPerformed
+
+    private void tableCustomerMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableCustomerMouseClicked
+        int index = tableCustomer.getSelectedRow();
+        TableModel model = tableCustomer.getModel();
+        String id = model.getValueAt(index, 0).toString();
+        customerPk = Integer.parseInt(id);
+
+        String name = model.getValueAt(index, 1).toString();
+        txtCustomerName.setText(name);
+
+        String mobileNumber = model.getValueAt(index, 2).toString();
+        txtCustomerMobileNumber.setText(mobileNumber);
+
+        String email = model.getValueAt(index, 3).toString();
+        txtCustomerEmail.setText(email);
+    }//GEN-LAST:event_tableCustomerMouseClicked
+
+    private void tableProductMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableProductMouseClicked
+        int index = tableProduct.getSelectedRow();
+        TableModel model = tableProduct.getModel();
+        String id = model.getValueAt(index, 0).toString();
+        productPk = Integer.parseInt(id);
+
+        String productName = model.getValueAt(index, 1).toString();
+        txtProductName.setText(productName);
+
+        String productPrice = model.getValueAt(index, 2).toString();
+        txtProductPrice.setText(productPrice);
+
+        String productDescription = model.getValueAt(index, 4).toString();
+        txtProductDescription.setText(productDescription);
+
+
+    }//GEN-LAST:event_tableProductMouseClicked
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        String noOfUnits = txtOrderQuantity.getText();
+        if (!noOfUnits.equals("")) {
+            String productName = txtProductName.getText();
+            String productDescription = txtProductDescription.getText();
+            String productPrice = txtProductPrice.getText();
+
+            int totalPrice = Integer.parseInt(txtOrderQuantity.getText()) * Integer.parseInt(productPrice);
+
+            int checkStock = 0;
+            int checkProductAlreadyExistsInCart = 0;
+
+            try {
+                
+                Connection con = ConnectionProvider.getCon();
+                Statement st = con.createStatement();
+                ResultSet rs = st.executeQuery("select * from product where product_pk=" + productPk + "");
+                while (rs.next()) {
+                   if(rs.getInt("quantity") >= Integer.parseInt(noOfUnits)) {
+                       checkStock = 1;
+                   }
+                   else {
+                   JOptionPane.showMessageDialog(null, "Product is out of stock. Only "+rs.getInt("quantity") + " left" );
+                   }
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, e);
+            }
+            
+            if(checkStock ==1) {
+                DefaultTableModel model = (DefaultTableModel) tableCart.getModel();
+                if(tableCart.getRowCount() !=0) {
+                    for(int i = 0; i < tableCart.getRowCount(); i++) {
+                        if(Integer.parseInt(model.getValueAt(i, 0).toString()) == productPk) {
+                            checkProductAlreadyExistsInCart = 1;
+                            JOptionPane.showMessageDialog(null, "Product already exists in cart");
+                        }
+                    }
+                }
+                if(checkProductAlreadyExistsInCart == 0) {
+                    model.addRow(new Object[]{productPk, productName, noOfUnits, productPrice, productDescription, totalPrice});
+                    finalTotalPrice = finalTotalPrice + totalPrice;
+                    lblFinalTotalPrice.setText(String.valueOf(finalTotalPrice));
+                    JOptionPane.showMessageDialog(null, "Added successfully");
+                }
+                clearProductFields();
+            } 
+            
+        } else {
+        JOptionPane.showMessageDialog(null, "Number of quantity and product field is required");
+                }
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
      * @param args the command line arguments
