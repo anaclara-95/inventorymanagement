@@ -1,8 +1,20 @@
 
+import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
+import common.OpenPdf;
 import dao.ConnectionProvider;
+import dao.InventoryUtils;
+import java.io.FileOutputStream;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
@@ -84,7 +96,7 @@ public class ManageOrder extends javax.swing.JFrame {
         jButton1 = new javax.swing.JButton();
         jLabel10 = new javax.swing.JLabel();
         lblFinalTotalPrice = new javax.swing.JLabel();
-        jButton2 = new javax.swing.JButton();
+        btnSaveOrderDetails = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
         jLabel16 = new javax.swing.JLabel();
@@ -156,6 +168,11 @@ public class ManageOrder extends javax.swing.JFrame {
                 "Product ID", "Name", "Quantity", "Price", "Description", "Sub Total"
             }
         ));
+        tableCart.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tableCartMouseClicked(evt);
+            }
+        });
         jScrollPane3.setViewportView(tableCart);
 
         getContentPane().add(jScrollPane3, new org.netbeans.lib.awtextra.AbsoluteConstraints(965, 120, 340, 180));
@@ -233,9 +250,14 @@ public class ManageOrder extends javax.swing.JFrame {
         lblFinalTotalPrice.setText("00000");
         getContentPane().add(lblFinalTotalPrice, new org.netbeans.lib.awtextra.AbsoluteConstraints(1157, 330, -1, -1));
 
-        jButton2.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        jButton2.setText("Save Order Details");
-        getContentPane().add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(1001, 415, 304, -1));
+        btnSaveOrderDetails.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        btnSaveOrderDetails.setText("Save Order Details");
+        btnSaveOrderDetails.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSaveOrderDetailsActionPerformed(evt);
+            }
+        });
+        getContentPane().add(btnSaveOrderDetails, new org.netbeans.lib.awtextra.AbsoluteConstraints(1001, 415, 304, -1));
 
         jButton3.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jButton3.setText("Reset");
@@ -256,7 +278,6 @@ public class ManageOrder extends javax.swing.JFrame {
         getContentPane().add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(1001, 567, 304, -1));
 
         jLabel16.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/Orders_background.png"))); // NOI18N
-        jLabel16.setText("jLabel16");
         getContentPane().add(jLabel16, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, -40, 1420, 850));
 
         pack();
@@ -354,45 +375,154 @@ public class ManageOrder extends javax.swing.JFrame {
             int checkProductAlreadyExistsInCart = 0;
 
             try {
-                
+
                 Connection con = ConnectionProvider.getCon();
                 Statement st = con.createStatement();
                 ResultSet rs = st.executeQuery("select * from product where product_pk=" + productPk + "");
                 while (rs.next()) {
-                   if(rs.getInt("quantity") >= Integer.parseInt(noOfUnits)) {
-                       checkStock = 1;
-                   }
-                   else {
-                   JOptionPane.showMessageDialog(null, "Product is out of stock. Only "+rs.getInt("quantity") + " left" );
-                   }
+                    if (rs.getInt("quantity") >= Integer.parseInt(noOfUnits)) {
+                        checkStock = 1;
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Product is out of stock. Only " + rs.getInt("quantity") + " left");
+                    }
                 }
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(null, e);
             }
-            
-            if(checkStock ==1) {
+
+            if (checkStock == 1) {
                 DefaultTableModel model = (DefaultTableModel) tableCart.getModel();
-                if(tableCart.getRowCount() !=0) {
-                    for(int i = 0; i < tableCart.getRowCount(); i++) {
-                        if(Integer.parseInt(model.getValueAt(i, 0).toString()) == productPk) {
+                if (tableCart.getRowCount() != 0) {
+                    for (int i = 0; i < tableCart.getRowCount(); i++) {
+                        if (Integer.parseInt(model.getValueAt(i, 0).toString()) == productPk) {
                             checkProductAlreadyExistsInCart = 1;
                             JOptionPane.showMessageDialog(null, "Product already exists in cart");
                         }
                     }
                 }
-                if(checkProductAlreadyExistsInCart == 0) {
+                if (checkProductAlreadyExistsInCart == 0) {
                     model.addRow(new Object[]{productPk, productName, noOfUnits, productPrice, productDescription, totalPrice});
                     finalTotalPrice = finalTotalPrice + totalPrice;
                     lblFinalTotalPrice.setText(String.valueOf(finalTotalPrice));
                     JOptionPane.showMessageDialog(null, "Added successfully");
                 }
                 clearProductFields();
-            } 
-            
+            }
+
         } else {
-        JOptionPane.showMessageDialog(null, "Number of quantity and product field is required");
-                }
+            JOptionPane.showMessageDialog(null, "Number of quantity and product field is required");
+        }
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void tableCartMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableCartMouseClicked
+        //eliminar producto de cart
+        int index = tableCart.getSelectedRow();
+        int a = JOptionPane.showConfirmDialog(null, "Do you want to remove this product?", "Select", JOptionPane.YES_NO_OPTION);
+        if (a == 0) {
+            TableModel model = tableCart.getModel();
+            String subTotal = model.getValueAt(index, 5).toString();
+            finalTotalPrice = finalTotalPrice - Integer.parseInt(subTotal);
+            lblFinalTotalPrice.setText(String.valueOf(finalTotalPrice));
+            ((DefaultTableModel) tableCart.getModel()).removeRow(index);
+        }
+
+    }//GEN-LAST:event_tableCartMouseClicked
+
+    private void btnSaveOrderDetailsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveOrderDetailsActionPerformed
+        if (finalTotalPrice != 0 && !txtCustomerName.getText().equals("")) {
+            orderId = getUniqueId("Bill-");
+            DefaultTableModel dtm = (DefaultTableModel) tableCart.getModel();
+            if (tableCart.getRowCount() != 0) {
+                for (int i = 0; i < tableCart.getRowCount(); i++) {
+                    try {
+                        Connection con = ConnectionProvider.getCon();
+                        Statement st = con.createStatement();
+                        st.executeUpdate("UPDATE product SET quantity = quantity-" + Integer.parseInt(dtm.getValueAt(i, 2).toString()) + " WHERE product_pk=" + Integer.parseInt(dtm.getValueAt(i, 0).toString()));
+                    } catch (Exception e) {
+                        JOptionPane.showMessageDialog(null, e);
+                    }
+                }
+
+            }
+            try {
+                SimpleDateFormat myFormat = new SimpleDateFormat("dd-MM-yyyy");
+                Calendar cal = Calendar.getInstance();
+                Connection con = ConnectionProvider.getCon();
+                PreparedStatement ps = con.prepareStatement("INSERT INTO orderDetail (orderID, customer_fk, orderDate, totalPaid) VALUES(?,?,?,?)");
+                ps.setString(1, orderId);
+                ps.setInt(2, customerPk);
+                ps.setString(3, myFormat.format(cal.getTime()));
+                ps.setInt(4, finalTotalPrice);
+                ps.executeUpdate();
+
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, e);
+            }
+
+            // generar el documento pdf de la factura
+            com.itextpdf.text.Document doc = new com.itextpdf.text.Document();
+            try {
+                SimpleDateFormat myFormat = new SimpleDateFormat("dd-MM-yyyy");
+                Calendar cal = Calendar.getInstance();
+                PdfWriter.getInstance(doc, new FileOutputStream(InventoryUtils.billPath + "" + orderId + ".pdf"));
+                doc.open();
+                Paragraph projectName = new Paragraph("                                                        Inventory Management System\n");
+                doc.add(projectName);
+                Paragraph starLine = new Paragraph("****************************************************************************************************************");
+                doc.add(starLine);
+                Paragraph details = new Paragraph("\tOrder ID: " + orderId + "\nDate: " + myFormat.format(cal.getTime()) +"\nTotal paid: " + finalTotalPrice);
+                doc.add(details);
+                doc.add(starLine);
+                PdfPTable tb1 = new PdfPTable(5);
+                PdfPCell nameCell = new PdfPCell(new Phrase("Name"));
+                PdfPCell descriptionCell = new PdfPCell(new Phrase("Description"));
+                PdfPCell priceCell = new PdfPCell(new Phrase("Price per unit"));
+                PdfPCell quantityCell = new PdfPCell(new Phrase("Quantity"));
+                PdfPCell subTotalPriceCell = new PdfPCell(new Phrase("Sub total price"));
+                
+                BaseColor backgroundColor = new BaseColor(255,204,51);
+                nameCell.setBackgroundColor(backgroundColor);
+                descriptionCell.setBackgroundColor(backgroundColor);
+                priceCell.setBackgroundColor(backgroundColor);
+                quantityCell.setBackgroundColor(backgroundColor);
+                subTotalPriceCell.setBackgroundColor(backgroundColor);
+                
+                tb1.addCell(nameCell);
+                tb1.addCell(descriptionCell);
+                tb1.addCell(priceCell);
+                tb1.addCell(quantityCell);
+                tb1.addCell(subTotalPriceCell);
+                
+                for(int i=0; i < tableCart.getRowCount(); i++) {
+                    tb1.addCell(tableCart.getValueAt(i, 1).toString());
+                    tb1.addCell(tableCart.getValueAt(i, 4).toString());
+                    tb1.addCell(tableCart.getValueAt(i, 3).toString());
+                    tb1.addCell(tableCart.getValueAt(i, 2).toString());
+                    tb1.addCell(tableCart.getValueAt(i, 5).toString());
+                }
+                
+                doc.add(tb1);
+                doc.add(starLine);
+                Paragraph thanksMsg = new Paragraph("Thank you, please visit again.");
+                doc.add(thanksMsg);
+                
+                //abrir PDF
+                OpenPdf.OpenById(orderId);
+               
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, e);
+            }
+            
+            doc.close();
+            setVisible(false);
+            new ManageOrder().setVisible(true);
+
+        }
+        
+        else {
+            JOptionPane.showMessageDialog(null, "Please add some product to cart or select customer");
+        }
+    }//GEN-LAST:event_btnSaveOrderDetailsActionPerformed
 
     /**
      * @param args the command line arguments
@@ -408,16 +538,24 @@ public class ManageOrder extends javax.swing.JFrame {
                 if ("Nimbus".equals(info.getName())) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
                     break;
+
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(ManageOrder.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(ManageOrder.class
+                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
+
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(ManageOrder.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(ManageOrder.class
+                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
+
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(ManageOrder.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(ManageOrder.class
+                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
+
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(ManageOrder.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(ManageOrder.class
+                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
 
@@ -430,8 +568,8 @@ public class ManageOrder extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnSaveOrderDetails;
     private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JLabel jLabel1;
@@ -464,4 +602,8 @@ public class ManageOrder extends javax.swing.JFrame {
     private javax.swing.JTextField txtProductName;
     private javax.swing.JTextField txtProductPrice;
     // End of variables declaration//GEN-END:variables
+
+    private Object OpenById() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }

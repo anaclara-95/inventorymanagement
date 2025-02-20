@@ -17,7 +17,7 @@ public class Home extends javax.swing.JFrame {
  //espera recibir role del usuario
     public Home(String role) {
         initComponents();
-        setLocationRelativeTo(null); //para que la centana se abra en el centro de la página
+        setLocationRelativeTo(null); //para que la ventana se abra en el centro de la página
         //ocultar el botón User si role es admin
         if(role.equals("Admin")){
             btnUser.setVisible(false);
